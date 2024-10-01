@@ -30,7 +30,7 @@ namespace AlphalyBot.Service
 
             ServiceManager service = new(groupMessage.GroupId);
             await service.Init();
-            if (groupMessage.Message.ToString().Split(" ").Length == 2 && await service.IsServiceEnabled(Services.BiliVideoQuery))
+            if (groupMessage.Message.ToString().Split(" ").Length == 2 && service.IsServiceEnabled(Services.BiliVideoQuery))
             {
                 string bvnumber = groupMessage.Message.ToString().Split(" ")[1];
                 BiliService bili = new(bvnumber);

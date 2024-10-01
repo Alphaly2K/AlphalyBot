@@ -47,7 +47,7 @@ $@"财运 {fortune[0]}
         {
             ServiceManager service = new(groupMessage.GroupId);
             await service.Init();
-            if (await service.IsServiceEnabled(Services.TodaysFortune))
+            if (service.IsServiceEnabled(Services.TodaysFortune))
             {
                 await TodaysFortuneInit(groupMessage);
             }

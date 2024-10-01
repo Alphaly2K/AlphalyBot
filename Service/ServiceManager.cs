@@ -80,9 +80,9 @@ namespace AlphalyBot.Service
             _services[(int)service] = '0';
             await connector.ChangeByGroupId(_groupId, new string(_services.ToArray()));
         }
-        public async Task<bool> IsServiceEnabled(Services service)
+        public bool IsServiceEnabled(Services service)
         {
-            return _services[(int)service] == 1;
+            return _services[(int)service] == '1';
         }
     }
 }
