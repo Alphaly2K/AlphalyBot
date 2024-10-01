@@ -1,0 +1,30 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33213.308
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AlphalyBot", "AlphalyBot.csproj", "{6E761E39-4F5C-4D83-99C7-31B7C2EE6ED1}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{EE84AD5A-0033-4BB4-83C6-7B39539E2FEE}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6E761E39-4F5C-4D83-99C7-31B7C2EE6ED1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6E761E39-4F5C-4D83-99C7-31B7C2EE6ED1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6E761E39-4F5C-4D83-99C7-31B7C2EE6ED1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6E761E39-4F5C-4D83-99C7-31B7C2EE6ED1}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {0E6E38FD-43B2-43C3-B956-C450429866AD}
+	EndGlobalSection
+EndGlobal
