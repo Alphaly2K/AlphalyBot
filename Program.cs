@@ -18,7 +18,7 @@ namespace AlphalyBot
         private const string ConfigPath = "config.json";
         private const string ProgramConfigPath = "startconfig.json";
         public static List<long> Admins;
-        public static Dictionary<long, string> TouhouOST = new();
+        public static Dictionary<long, short> TouhouOST = new();
         private static async Task Main(string[] args)
         {
             Log.Logger = new LoggerConfiguration()

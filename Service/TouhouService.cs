@@ -1,4 +1,6 @@
 ﻿using AlphalyBot.Model;
+using AlphalyBot.Tool;
+using Makabaka.Models.API.Responses;
 using Makabaka.Models.EventArgs;
 using Makabaka.Models.Messages;
 using NAudio.Wave;
@@ -1270,29 +1272,67 @@ namespace AlphalyBot.Service
             ServiceManager service = new(groupMessage.GroupId);
             await service.Init();
             TouhouService touhou = new TouhouService(groupMessage);
-            if (groupMessage.Message.ToString().Split(" ")[1].ToLower() == "ostrecognise" && service.IsServiceEnabled(Services.TouhouOST))
+            if (groupMessage.Message.ToString().Split(" ")[1].ToLower() == "ostrecognise"&&groupMessage.Message.ToString().Split(" ").Length==2 && service.IsServiceEnabled(Services.TouhouOST))
             {
                 await touhou.TouhouOST();
             }
+            else
+            {
+                if (groupMessage.Message.ToString().Split(" ")[1].ToLower() == "ostrecognise" && groupMessage.Message.ToString().Split(" ").Length == 3 && service.IsServiceEnabled(Services.TouhouOST))
+                {
+                    await touhou.TouhouOSTCheck();
+                }
+            }
+            
         }
         private readonly GroupMessageEventArgs _groupMessage;
         public TouhouService(GroupMessageEventArgs groupMessage)
         {
             _groupMessage = groupMessage;
         }
+        public async Task TouhouOSTCheck()
+        {
+            string answer = _groupMessage.Message.ToString().Split(" ")[2];
+            int option;
+            switch (answer)
+            {
+                case "A": option= 0; break;
+                    case "B": option= 1; break;
+                        case "C": option= 2;break;
+                        case "D": option= 3;break;
+                    default: return; 
+            }
+            if (option == Program.TouhouOST[_groupMessage.Sender.UserId])
+                await _groupMessage.ReplyAsync(new TextSegment("回答正确"));
+            else
+                await _groupMessage.ReplyAsync(new TextSegment("回答错误"));
+        }
         public async Task TouhouOST()
         {
+            if (Program.TouhouOST.ContainsKey(_groupMessage.Sender.UserId))
+            {
+                return;
+            }
             Random rnd = new Random();
-            int random = rnd.Next(0,OSTKey.Count-1);
-            string option = OSTKey[random];
-            var raw = new AudioFileReader(OSTDict[option]);
+            List<int> options = RandomR.GenerateUniqueRandomNumbers(0, OSTKey.Count - 1,4);
+            string result = OSTKey[options[0]];
+            AudioFileReader? raw=null;
+            try
+            {
+                raw = new AudioFileReader(OSTDict[result]);
+            }catch(Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                Console.WriteLine(OSTDict[result]);
+                return;
+            }
             TimeSpan time = raw.TotalTime;
             double timelong = time.TotalMilliseconds;
             double start = rnd.NextDouble() * (timelong-20001);
             var trimmed = raw.Skip(TimeSpan.FromMilliseconds(start)).Take(TimeSpan.FromSeconds(20));
             string filename = Guid.NewGuid().ToString()+".wav";
             WaveFileWriter.CreateWaveFile16(filename, trimmed);
-            string tmp = System.Environment.CurrentDirectory.Replace(@"\", @"\");
+            string tmp = System.Environment.CurrentDirectory;
             string uri = @$"file:///{tmp}\\{filename}";
             RestClient client = new RestClient("http://127.0.0.1:3000/send_group_msg");
             RestRequest request = new RestRequest();
@@ -1304,10 +1344,22 @@ namespace AlphalyBot.Service
             sendreq.message.type = "record";
             sendreq.message.data = new SendMessageModel.Data();
             sendreq.message.data.file = uri;
-            Console.WriteLine(JsonConvert.SerializeObject(sendreq));
             request.AddBody(JsonConvert.SerializeObject(sendreq));
             await client.ExecuteAsync(request);
-            await _groupMessage.ReplyAsync(new TextSegment($"搶曽原曲认知\n本测试包含正作、官方出版物以及西方和连缘的OST\n"));
+            List<int> randomoptions = RandomR.GenerateUniqueRandomNumbers(0, 3, 4);
+            int trueselection=0;
+            while(randomoptions[trueselection] != 0)
+            {
+                 trueselection++;
+            }
+            await _groupMessage.ReplyAsync(new TextSegment($"搶曽原曲认知\n包含正作、官方出版物以及西方和连缘的OST\n使用/th ostrecognise <answer>回复答案\nA.{OSTKey[options[randomoptions[0]]]}\nB.{OSTKey[options[randomoptions[1]]]}\nC.{OSTKey[options[randomoptions[2]]]}\nD.{OSTKey[options[randomoptions[3]]]}\n"));
+            Program.TouhouOST.Add(_groupMessage.Sender.UserId, (short)trueselection);
+            await Task.Run(async () =>
+            {
+                await Task.Delay(35000);
+                Program.TouhouOST.Remove(_groupMessage.Sender.UserId);
+            });
+            File.Delete(filename);
         }
 
     }
