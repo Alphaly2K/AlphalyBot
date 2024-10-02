@@ -65,7 +65,7 @@ namespace AlphalyBot.Service
 
             for (int i = _services.Count - 1; i < ServiceAmount; i++)
             {
-                _services[i] = DefaultSettings[i];
+                _services.Add(DefaultSettings[i]);
             }
             await connector.ChangeByGroupId(_groupId, new string(_services.ToArray()));
         }
