@@ -22,6 +22,7 @@ namespace AlphalyBot.Controller
             GMCommandDict.Add("/bili", BiliService.BiliQuery);
             GMCommandDict.Add("/service", ServiceManager.ServiceMgr);
             GMCommandDict.Add("/gal", GalService.GalServiceInit);
+            GMCommandDict.Add("/th", TouhouService.TouhouServiceInit);
         }
         public async Task Exec()
         {

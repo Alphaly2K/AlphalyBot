@@ -38,18 +38,14 @@ $@"财运 {fortune[0]}
 总之是一个{(fortune[0] + fortune[1] + fortune[2]) / 3}
 ";
         }
-        public static async Task TodaysFortuneInit(GroupMessageEventArgs groupMessage)
-        {
-            Fortune fortune = new(groupMessage.Sender.UserId);
-            _ = await groupMessage.ReplyAsync(new TextSegment(fortune.Message));
-        }
         public static async Task TodaysFortune(GroupMessageEventArgs groupMessage)
         {
             ServiceManager service = new(groupMessage.GroupId);
             await service.Init();
             if (service.IsServiceEnabled(Services.TodaysFortune))
             {
-                await TodaysFortuneInit(groupMessage);
+                Fortune fortune = new(groupMessage.Sender.UserId);
+                _ = await groupMessage.ReplyAsync(new TextSegment(fortune.Message));
             }
         }
     }

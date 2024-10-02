@@ -7,12 +7,13 @@ namespace AlphalyBot.Service
     {
         TodaysFortune = 0,
         BiliVideoQuery = 1,
-        MonthlyGal = 2
+        MonthlyGal = 2,
+        TouhouOST =3,
     }
     internal class ServiceManager
     {
-        public static int ServiceAmount = 3;
-        public static string DefaultSettings = "111";
+        public static int ServiceAmount = 4;
+        public static string DefaultSettings = "1111";
         public static async Task ServiceMgr(GroupMessageEventArgs groupMessage)
         {
             string[] message = groupMessage.Message.ToString().Split(" ");

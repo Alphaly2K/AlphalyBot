@@ -12,10 +12,8 @@ namespace AlphalyBot.Service
             ServiceManager service = new(groupMessage.GroupId);
             await service.Init();
             GalService galService = new(groupMessage);
-            Console.WriteLine(service.IsServiceEnabled(Services.MonthlyGal) + "2");
-            if (groupMessage.Message.ToString().Split(" ")[1] == "monthlynew" && service.IsServiceEnabled(Services.MonthlyGal))
+            if (groupMessage.Message.ToString().Split(" ")[1].ToLower() == "monthlynew" && service.IsServiceEnabled(Services.MonthlyGal))
             {
-                Console.WriteLine(service.IsServiceEnabled(Services.MonthlyGal)+"1");
                 string? argument = (groupMessage.Message.ToString().Split(" ").Length == 3) ? groupMessage.Message.ToString().Split(" ")[2] : null;
                 if (argument == "true")
                 {
