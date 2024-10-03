@@ -19,6 +19,7 @@ namespace AlphalyBot.Controller
         private void AddDelegate()
         {
             GMDict.Add("今日运势", Fortune.TodaysFortune);
+            GMDict.Add("东方原曲认知", TouhouService.TouhouServiceInit);
             GMCommandDict.Add("/bili", BiliService.BiliQuery);
             GMCommandDict.Add("/service", ServiceManager.ServiceMgr);
             GMCommandDict.Add("/gal", GalService.GalServiceInit);
