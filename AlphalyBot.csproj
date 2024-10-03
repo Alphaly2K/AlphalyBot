@@ -12,7 +12,6 @@
     <PackageReference Include="HtmlAgilityPack" Version="1.11.65" />
     <PackageReference Include="Makabaka" Version="1.2.1.2" />
     <PackageReference Include="MySqlConnector" Version="2.3.7" />
-    <PackageReference Include="NAudio" Version="2.2.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="RestSharp" Version="112.0.0" />
   </ItemGroup>

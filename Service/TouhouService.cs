@@ -3,7 +3,6 @@ using AlphalyBot.Tool;
 using Makabaka.Models.API.Responses;
 using Makabaka.Models.EventArgs;
 using Makabaka.Models.Messages;
-using NAudio.Wave;
 using Newtonsoft.Json;
 using RestSharp;
 
@@ -1316,22 +1315,8 @@ namespace AlphalyBot.Service
             Random rnd = new Random();
             List<int> options = RandomR.GenerateUniqueRandomNumbers(0, OSTKey.Count - 1,4);
             string result = OSTKey[options[0]];
-            AudioFileReader? raw=null;
-            try
-            {
-                raw = new AudioFileReader(OSTDict[result]);
-            }catch(Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                Console.WriteLine(OSTDict[result]);
-                return;
-            }
-            TimeSpan time = raw.TotalTime;
-            double timelong = time.TotalMilliseconds;
-            double start = rnd.NextDouble() * (timelong-20001);
-            var trimmed = raw.Skip(TimeSpan.FromMilliseconds(start)).Take(TimeSpan.FromSeconds(20));
-            string filename = Guid.NewGuid().ToString()+".wav";
-            WaveFileWriter.CreateWaveFile16(filename, trimmed);
+            string filename = Guid.NewGuid().ToString() + ".mp3";
+            await AudioCutter.RandomClipFromAudioUrlAsync(OSTDict[result], filename);
             string tmp = System.Environment.CurrentDirectory;
             string uri = @$"file:///{tmp}\\{filename}";
             RestClient client = new RestClient("http://127.0.0.1:3000/send_group_msg");
