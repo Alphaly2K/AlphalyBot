@@ -400,3 +400,4 @@ FodyWeavers.xsd
 # config
 config.json
 startconfig.json
+/.idea

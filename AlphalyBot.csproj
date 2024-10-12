@@ -1,28 +1,28 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net6.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="CodeHollow.FeedReader" Version="1.2.6" />
-    <PackageReference Include="HtmlAgilityPack" Version="1.11.65" />
-    <PackageReference Include="Makabaka" Version="1.2.1.2" />
-    <PackageReference Include="MySqlConnector" Version="2.3.7" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="RestSharp" Version="112.0.0" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="CodeHollow.FeedReader" Version="1.2.6"/>
+        <PackageReference Include="HtmlAgilityPack" Version="1.11.65"/>
+        <PackageReference Include="Makabaka" Version="1.2.1.2"/>
+        <PackageReference Include="MySqlConnector" Version="2.3.7"/>
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3"/>
+        <PackageReference Include="RestSharp" Version="112.0.0"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <None Update="config.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="startconfig.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
+    <ItemGroup>
+        <None Update="config.json">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="startconfig.json">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
 
 </Project>

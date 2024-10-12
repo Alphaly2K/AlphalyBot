@@ -1,89 +1,85 @@
 ﻿using AlphalyBot.Tool;
 using Makabaka.Models.EventArgs;
 
-namespace AlphalyBot.Service
+namespace AlphalyBot.Service;
+
+public enum Services
 {
-    internal enum Services
+    TodaysFortune = 0,
+    BiliVideoQuery = 1,
+    MonthlyGal = 2,
+    TouhouOST = 3
+}
+
+internal class ServiceManager
+{
+    public static int ServiceAmount = 4;
+    public static string DefaultSettings = "1111";
+    private readonly long _groupId;
+    public List<char> _services;
+
+    public ServiceManager(long groupId)
     {
-        TodaysFortune = 0,
-        BiliVideoQuery = 1,
-        MonthlyGal = 2,
-        TouhouOST =3,
+        _groupId = groupId;
     }
-    internal class ServiceManager
+
+    public static async Task ServiceMgr(GroupMessageEventArgs groupMessage)
     {
-        public static int ServiceAmount = 4;
-        public static string DefaultSettings = "1111";
-        public static async Task ServiceMgr(GroupMessageEventArgs groupMessage)
+        var message = groupMessage.Message.ToString().Split(" ");
+        if (message.Length == 3 && Program.Admins.Contains(groupMessage.Sender.UserId))
         {
-            string[] message = groupMessage.Message.ToString().Split(" ");
-            if (message.Length == 3 && Program.Admins.Contains(groupMessage.Sender.UserId))
+            ServiceManager manager = new(groupMessage.GroupId);
+            await manager.Init();
+            Services service;
+            try
             {
-                ServiceManager manager = new(groupMessage.GroupId);
-                await manager.Init();
-                Services service;
-                try
-                {
-                    service = (Services)System.Enum.Parse(typeof(Services), message[2]);
-                }
-                catch (Exception)
-                {
-                    return;
-                }
-                if (message[1] == "enable")
-                {
-                    await manager.EnableService(service);
-                }
-
-                if (message[1] == "disable")
-                {
-                    await manager.DisableService(service);
-                }
+                service = (Services)Enum.Parse(typeof(Services), message[2]);
             }
-        }
-        private readonly long _groupId;
-        public List<char> _services;
-        public ServiceManager(long groupId)
-        {
-            _groupId = groupId;
-        }
-        public async Task Init()
-        {
-            SQLConnector connector = new();
-            if (!await connector.IsGroupIdExist(_groupId))
-            {
-                await connector.InsertByGroupId(_groupId, DefaultSettings);
-                _services = DefaultSettings.ToList<char>();
-                return;
-            }
-            string tmp = await connector.QueryByGroupId(_groupId);
-            _services = tmp.ToList<char>();
-            if (_services.Count == ServiceAmount)
+            catch (Exception)
             {
                 return;
             }
 
-            for (int i = _services.Count - 1; i < ServiceAmount; i++)
-            {
-                _services.Add(DefaultSettings[i]);
-            }
-            await connector.ChangeByGroupId(_groupId, new string(_services.ToArray()));
+            if (message[1] == "enable") await manager.EnableService(service);
+
+            if (message[1] == "disable") await manager.DisableService(service);
         }
-        public async Task EnableService(Services service)
+    }
+
+    public async Task Init()
+    {
+        SQLConnector connector = new();
+        if (!await connector.IsGroupIdExist(_groupId))
         {
-            SQLConnector connector = new();
-            _services[(int)service] = '1';
-            await connector.ChangeByGroupId(_groupId, new string(_services.ToArray()));
+            await connector.InsertByGroupId(_groupId, DefaultSettings);
+            _services = DefaultSettings.ToList();
+            return;
         }
-        public async Task DisableService(Services service)
-        {
-            SQLConnector connector = new();
-            _services[(int)service] = '0';
-            await connector.ChangeByGroupId(_groupId, new string(_services.ToArray()));
-        }
-        public bool IsServiceEnabled(Services service)
-        {
-            return _services[(int)service] == '1';
-        }
+
+        var tmp = await connector.QueryByGroupId(_groupId);
+        _services = tmp.ToList();
+        if (_services.Count == ServiceAmount) return;
+
+        for (var i = _services.Count - 1; i < ServiceAmount; i++) _services.Add(DefaultSettings[i]);
+        await connector.ChangeByGroupId(_groupId, new string(_services.ToArray()));
+    }
+
+    public async Task EnableService(Services service)
+    {
+        SQLConnector connector = new();
+        _services[(int)service] = '1';
+        await connector.ChangeByGroupId(_groupId, new string(_services.ToArray()));
+    }
+
+    public async Task DisableService(Services service)
+    {
+        SQLConnector connector = new();
+        _services[(int)service] = '0';
+        await connector.ChangeByGroupId(_groupId, new string(_services.ToArray()));
+    }
+
+    public bool IsServiceEnabled(Services service)
+    {
+        return _services[(int)service] == '1';
     }
 }

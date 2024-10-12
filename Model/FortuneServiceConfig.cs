@@ -1,8 +1,7 @@
-﻿namespace AlphalyBot.Model
+﻿namespace AlphalyBot.Model;
+
+internal class FortuneServiceConfig
 {
-    internal class FortuneServiceConfig
-    {
-        ///todo
-        ///
-    }
+    ///todo
+    ///
 }
