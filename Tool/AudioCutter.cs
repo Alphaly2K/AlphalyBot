@@ -2,7 +2,7 @@
 
 namespace AlphalyBot.Tool;
 
-internal class AudioCutter
+internal static class AudioCutter
 {
     public static async Task RandomClipFromAudioAsync(string audioFile, string outputFile)
     {
@@ -17,27 +17,27 @@ internal class AudioCutter
         await RunFFmpegAsync(audio, outputFile, randomStart, 20);
     }
 
-    public static async Task<TimeSpan> GetAudioDurationAsync(string filePath)
+    private static async Task<TimeSpan> GetAudioDurationAsync(string filePath)
     {
         // 获取音频总时长，使用 ffprobe 来实现
-        var ffprobe = new Process();
-        ffprobe.StartInfo.FileName = "ffprobe"; // 假设ffprobe已添加到系统环境变量中
-        ffprobe.StartInfo.Arguments = $"-i \"{filePath}\" -show_entries format=duration -v quiet -of csv=\"p=0\"";
-        ffprobe.StartInfo.RedirectStandardOutput = true;
-        ffprobe.StartInfo.RedirectStandardError = true;
-        ffprobe.StartInfo.UseShellExecute = false;
-        ffprobe.StartInfo.CreateNoWindow = true;
+        var ffProbe = new Process();
+        ffProbe.StartInfo.FileName = "ffprobe"; // 假设ffprobe已添加到系统环境变量中
+        ffProbe.StartInfo.Arguments = $"-i \"{filePath}\" -show_entries format=duration -v quiet -of csv=\"p=0\"";
+        ffProbe.StartInfo.RedirectStandardOutput = true;
+        ffProbe.StartInfo.RedirectStandardError = true;
+        ffProbe.StartInfo.UseShellExecute = false;
+        ffProbe.StartInfo.CreateNoWindow = true;
 
-        ffprobe.Start();
-        var output = await ffprobe.StandardOutput.ReadToEndAsync();
-        ffprobe.WaitForExit();
+        ffProbe.Start();
+        var output = await ffProbe.StandardOutput.ReadToEndAsync();
+        await ffProbe.WaitForExitAsync();
 
         if (double.TryParse(output, out var durationInSeconds))
             return TimeSpan.FromSeconds(durationInSeconds);
         throw new Exception("无法获取音频时长。");
     }
 
-    public static async Task RunFFmpegAsync(string inputFile, string outputFile, int startTime, int duration)
+    private static async Task RunFFmpegAsync(string inputFile, string outputFile, int startTime, int duration)
     {
         var ffmpeg = new Process();
         ffmpeg.StartInfo.FileName = "ffmpeg"; // 假设ffmpeg已添加到系统环境变量中

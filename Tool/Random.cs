@@ -1,6 +1,6 @@
 ﻿namespace AlphalyBot.Tool;
 
-internal class RandomR
+internal static class RandomR
 {
     public static List<int> GenerateUniqueRandomNumbers(int lowerBound, int upperBound, int count)
     {

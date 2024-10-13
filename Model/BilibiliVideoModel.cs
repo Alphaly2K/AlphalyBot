@@ -1,6 +1,6 @@
 ﻿namespace AlphalyBot.Model;
 
-internal class BilibiliVideoModel
+internal abstract class BilibiliVideoModel
 {
     public class Rootobject
     {

@@ -1,6 +1,6 @@
 ﻿namespace AlphalyBot.Model;
 
-internal class SendMessageModel
+internal abstract class SendMessageModel
 {
     public class Rootobject
     {

@@ -2,6 +2,7 @@
 using HtmlAgilityPack;
 using Makabaka.Models.EventArgs;
 using Makabaka.Models.Messages;
+using Serilog;
 
 namespace AlphalyBot.Service;
 
@@ -9,7 +10,7 @@ internal class GalService
 {
     private readonly GroupMessageEventArgs _groupMessage;
 
-    public GalService(GroupMessageEventArgs groupMessage)
+    private GalService(GroupMessageEventArgs groupMessage)
     {
         _groupMessage = groupMessage;
     }
@@ -31,8 +32,10 @@ internal class GalService
         }
     }
 
-    public async Task MonthlyNew(bool PictureVisibility = false)
+    private async Task MonthlyNew(bool pictureVisibility = false)
     {
+        Log.Information("GalgameMonthlyNew: Command from {0} in {1}, picture visibility = {2}", _groupMessage.UserId,
+            _groupMessage.GroupId, pictureVisibility);
         var feed = await FeedReader.ReadAsync("https://rsshub.ktachibana.party/ymgal/game/release");
         if (feed != null)
         {
@@ -46,7 +49,7 @@ internal class GalService
                 doc.LoadHtml(item.Description);
                 var aNode = doc.DocumentNode.SelectSingleNode("//img");
                 var bNodes = doc.DocumentNode.SelectNodes("//li");
-                if (PictureVisibility) segments.Add(new ImageSegment(aNode.GetAttributeValue("src", "")));
+                if (pictureVisibility) segments.Add(new ImageSegment(aNode.GetAttributeValue("src", "")));
 
                 segments.Add(new TextSegment(item.Title + "\n"));
                 segments.Add(new TextSegment($"制作社：{bNodes[0].InnerText}\n"));

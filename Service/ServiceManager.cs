@@ -1,5 +1,6 @@
 ﻿using AlphalyBot.Tool;
 using Makabaka.Models.EventArgs;
+using Serilog;
 
 namespace AlphalyBot.Service;
 
@@ -8,15 +9,16 @@ public enum Services
     TodaysFortune = 0,
     BiliVideoQuery = 1,
     MonthlyGal = 2,
-    TouhouOST = 3
+    TouhouOstRecog = 3,
+    RandomTouhouOst = 4
 }
 
 internal class ServiceManager
 {
-    public static int ServiceAmount = 4;
-    public static string DefaultSettings = "1111";
+    private const int ServiceAmount = 5;
+    private const string DefaultSettings = "11111";
     private readonly long _groupId;
-    public List<char> _services;
+    private List<char> _services;
 
     public ServiceManager(long groupId)
     {
@@ -37,6 +39,7 @@ internal class ServiceManager
             }
             catch (Exception)
             {
+                Log.Error("ServiceMgr: Service not found {0} in {1}", message[2], groupMessage.GroupId);
                 return;
             }
 
@@ -48,7 +51,7 @@ internal class ServiceManager
 
     public async Task Init()
     {
-        SQLConnector connector = new();
+        SqlConnector connector = new();
         if (!await connector.IsGroupIdExist(_groupId))
         {
             await connector.InsertByGroupId(_groupId, DefaultSettings);
@@ -64,18 +67,20 @@ internal class ServiceManager
         await connector.ChangeByGroupId(_groupId, new string(_services.ToArray()));
     }
 
-    public async Task EnableService(Services service)
+    private async Task EnableService(Services service)
     {
-        SQLConnector connector = new();
+        SqlConnector connector = new();
         _services[(int)service] = '1';
         await connector.ChangeByGroupId(_groupId, new string(_services.ToArray()));
+        Log.Information("ServiceMgr: Enabled service {0} in {1}", service.ToString(), _groupId);
     }
 
-    public async Task DisableService(Services service)
+    private async Task DisableService(Services service)
     {
-        SQLConnector connector = new();
+        SqlConnector connector = new();
         _services[(int)service] = '0';
         await connector.ChangeByGroupId(_groupId, new string(_services.ToArray()));
+        Log.Information("ServiceMgr: Disabled service {0} in {1}", service.ToString(), _groupId);
     }
 
     public bool IsServiceEnabled(Services service)

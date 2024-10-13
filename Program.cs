@@ -1,4 +1,5 @@
-﻿using System.Runtime.Loader;
+﻿using System.Diagnostics;
+using System.Runtime.Loader;
 using System.Text;
 using AlphalyBot.Controller;
 using AlphalyBot.Model;
@@ -10,57 +11,81 @@ using Makabaka.Models.Messages;
 using Makabaka.Services;
 using Newtonsoft.Json;
 using Serilog;
+using Serilog.Events;
 
 namespace AlphalyBot;
 
-internal class Program
+internal static class Program
 {
-    private const string ConfigPath = "config.json";
-    private const string ProgramConfigPath = "startconfig.json";
+    private const string ConfigPath = "configs/config.json";
+    private const string ProgramConfigPath = "configs/startconfig.json";
+    private const string FortuneConfigPath = "configs/todaysfortune.json";
     public static List<long> Admins;
-    public static Dictionary<long, short> TouhouOST = new();
+    public static FortuneServiceConfig? FortuneConfig;
+    public static readonly Dictionary<long, short> TouhouOst = new();
 
     private static async Task Main(string[] args)
     {
+        var beforeDt = DateTime.Now;
         Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Verbose()
-            .CreateLogger(); // 配置日志    
-
+            .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+            .Enrich.FromLogContext()
+            .WriteTo.Console().CreateLogger();
         // 加载配置
         ForwardWebSocketServiceConfig? config = null;
         ProgramConfigModel? programConfig = null;
         if (File.Exists(ConfigPath))
-            config = JsonConvert.DeserializeObject<ForwardWebSocketServiceConfig>(File.ReadAllText(ConfigPath));
+            config = JsonConvert.DeserializeObject<ForwardWebSocketServiceConfig>(
+                await File.ReadAllTextAsync(ConfigPath));
         if (File.Exists(ProgramConfigPath))
         {
-            programConfig = JsonConvert.DeserializeObject<ProgramConfigModel>(File.ReadAllText(ProgramConfigPath));
+            programConfig =
+                JsonConvert.DeserializeObject<ProgramConfigModel>(await File.ReadAllTextAsync(ProgramConfigPath));
         }
         else
         {
-            Console.WriteLine("配置文件已创建");
+            Log.Error("Main: Config file could not be found.");
+            Log.Information("Main: Config file created");
             programConfig = new ProgramConfigModel();
-            File.WriteAllText(ProgramConfigPath, JsonConvert.SerializeObject(programConfig, Formatting.Indented));
+            await File.WriteAllTextAsync(ProgramConfigPath,
+                JsonConvert.SerializeObject(programConfig, Formatting.Indented));
             Environment.Exit(0);
         }
 
+        if (File.Exists(FortuneConfigPath))
+        {
+            FortuneConfig = JsonConvert.DeserializeObject<FortuneServiceConfig>(await File.ReadAllTextAsync(FortuneConfigPath));
+        }
+        else
+        {
+            Log.Warning("Fortune: Today's fortune config file could not be found. Creating a new one.");
+        }
+        
         config ??= new ForwardWebSocketServiceConfig();
-        File.WriteAllText(ConfigPath, JsonConvert.SerializeObject(config, Formatting.Indented));
-        File.WriteAllText(ProgramConfigPath, JsonConvert.SerializeObject(programConfig, Formatting.Indented));
+        FortuneConfig ??= new FortuneServiceConfig();
+        await File.WriteAllTextAsync(ConfigPath, JsonConvert.SerializeObject(config, Formatting.Indented));
+        await File.WriteAllTextAsync(ProgramConfigPath,
+            JsonConvert.SerializeObject(programConfig, Formatting.Indented));
+        await File.WriteAllTextAsync(FortuneConfigPath,
+            JsonConvert.SerializeObject(FortuneConfig, Formatting.Indented));
         // 初始化服务
+        Debug.Assert(programConfig != null, nameof(programConfig) + " != null");
         Admins = programConfig.Admins;
         var service = ServiceFactory.CreateForwardWebSocketService(config);
+        Log.Information("Main: Config loaded");
         service.OnGroupMessage += OnGroupMessage;
         service.OnPrivateMessage += OnPrivateMessage;
         service.OnGroupRequest += OnGroupRequest;
-        SQLConnector connector = new(programConfig.SqlConnectionString, "utf8mb4_general_ci");
+        SqlConnector connector = new(programConfig.SqlConnectionString, "utf8mb4_general_ci");
         await connector.Init();
+        Log.Information("Main: Database connection created");
         // 启动服务
         CancellationTokenSource cts = new();
         AssemblyLoadContext.Default.Unloading += ctx => cts.Cancel();
         Console.CancelKeyPress += (sender, eventArgs) => cts.Cancel();
-
         await service.StartAsync();
-        Console.WriteLine("Done!");
+        var afterDt = DateTime.Now;
+        Log.Information("Main: Done ({0}ms)!", afterDt.Subtract(beforeDt).TotalMilliseconds);
         // 等待取消信号
         try
         {
@@ -71,12 +96,15 @@ internal class Program
             // 服务停止
         }
 
+        Log.Information("Main: Task cancelled");
         await service.StopAsync();
     }
 
     private static async void OnGroupRequest(object? sender, GroupRequestEventArgs e)
     {
+        Log.Information("GroupRequest: Received group request ({0})", e.GroupId);
         _ = await e.AcceptAsync(); // 有群请求，直接同意
+        Log.Information("GroupRequest: Accepted group request ({0})", e.GroupId);
     }
 
     private static async void OnPrivateMessage(object? sender, PrivateMessageEventArgs e)
@@ -84,6 +112,7 @@ internal class Program
         if (e.Message == "测试")
         {
             _ = await e.ReplyAsync(new TextSegment("耶！"));
+            Log.Information("PrivateMessage: Received test message from {0}", e.UserId);
         }
         else if (e.Message == "获取好友历史消息记录测试")
         {
@@ -108,7 +137,9 @@ internal class Program
         }
         else if (e.Message == "好友戳一戳测试")
         {
+            Log.Information("PrivateMessage: Received poke from ({0})", e.UserId);
             _ = await e.Context.FriendPokeAsync(e.UserId);
+            Log.Information("PrivateMessage: Sent poke to ({0})", e.UserId);
         }
     }
 

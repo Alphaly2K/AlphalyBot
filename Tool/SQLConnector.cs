@@ -1,53 +1,54 @@
 ﻿using MySqlConnector;
+using Serilog;
 
 namespace AlphalyBot.Tool;
 
-internal class SQLConnector
+internal class SqlConnector
 {
-    public static string ConnectString;
-    private static string Collation;
+    private static string _connectString;
+    private static string _collation;
 
-    private readonly MySqlConnection msc;
+    private readonly MySqlConnection _msc;
 
-    public SQLConnector(string connectString, string collation)
+    public SqlConnector(string connectString, string collation)
     {
-        ConnectString = connectString;
-        Collation = collation;
-        msc = new MySqlConnection(ConnectString);
+        _connectString = connectString;
+        _collation = collation;
+        _msc = new MySqlConnection(_connectString);
     }
 
-    public SQLConnector()
+    public SqlConnector()
     {
-        msc = new MySqlConnection(ConnectString);
+        _msc = new MySqlConnection(_connectString);
     }
 
     public async Task<bool> IsGroupIdExist(long groupId)
     {
         try
         {
-            await msc.OpenAsync();
+            await _msc.OpenAsync();
         }
         catch (Exception ex)
         {
-            Console.WriteLine("数据库无法连接");
+            Log.Fatal("DbConnector: Error while opening SQL connection");
 #if DEBUG
-            Console.WriteLine(ex.ToString());
+            Log.Fatal(ex.ToString());
 #endif
             Environment.Exit(-1);
         }
 
         var sql =
             $"SELECT CASE WHEN EXISTS (SELECT 1 FROM groupservices WHERE Id = {groupId}) THEN 1 ELSE 0 END AS exists_flag;";
-        MySqlCommand cmd = new(sql, msc);
+        MySqlCommand cmd = new(sql, _msc);
         var reader = await cmd.ExecuteReaderAsync();
         _ = reader.Read();
         if ((int)reader[0] == 1)
         {
-            await msc.CloseAsync();
+            await _msc.CloseAsync();
             return true;
         }
 
-        await msc.CloseAsync();
+        await _msc.CloseAsync();
         return false;
     }
 
@@ -55,23 +56,23 @@ internal class SQLConnector
     {
         try
         {
-            await msc.OpenAsync();
+            await _msc.OpenAsync();
         }
         catch (Exception ex)
         {
-            Console.WriteLine("数据库无法连接");
+            Log.Fatal("DbConnector: Error while opening SQL connection");
 #if DEBUG
-            Console.WriteLine(ex.ToString());
+            Log.Fatal(ex.ToString());
 #endif
             Environment.Exit(-1);
         }
 
         var sql = $"select Service from groupservices where Id = {groupId}";
-        MySqlCommand cmd = new(sql, msc);
+        MySqlCommand cmd = new(sql, _msc);
         var reader = await cmd.ExecuteReaderAsync();
         _ = reader.Read();
         var tmp = (string)reader[0];
-        await msc.CloseAsync();
+        await _msc.CloseAsync();
         return tmp;
     }
 
@@ -79,71 +80,74 @@ internal class SQLConnector
     {
         try
         {
-            await msc.OpenAsync();
+            await _msc.OpenAsync();
         }
         catch (Exception ex)
         {
-            Console.WriteLine("数据库无法连接");
+            Log.Fatal("DbConnector: Error while opening SQL connection");
 #if DEBUG
-            Console.WriteLine(ex.ToString());
+            Log.Fatal(ex.ToString());
 #endif
             Environment.Exit(-1);
         }
 
         var sql = $"insert into groupservices values ({groupId},{services})";
-        MySqlCommand cmd = new(sql, msc);
+        MySqlCommand cmd = new(sql, _msc);
         _ = await cmd.ExecuteNonQueryAsync();
-        await msc.CloseAsync();
+        await _msc.CloseAsync();
     }
 
     public async Task ChangeByGroupId(long groupId, string services)
     {
         try
         {
-            await msc.OpenAsync();
+            await _msc.OpenAsync();
         }
         catch (Exception ex)
         {
-            Console.WriteLine("数据库无法连接");
+            Log.Fatal("DbConnector: Error while opening SQL connection");
 #if DEBUG
-            Console.WriteLine(ex.ToString());
+            Log.Fatal(ex.ToString());
 #endif
             Environment.Exit(-1);
         }
 
         var sql = @$"update groupservices set Service='{services}' where Id = '{groupId}'";
-        MySqlCommand cmd = new(sql, msc);
+        MySqlCommand cmd = new(sql, _msc);
         _ = await cmd.ExecuteNonQueryAsync();
-        await msc.CloseAsync();
+        await _msc.CloseAsync();
     }
 
     public async Task Init()
     {
         try
         {
-            await msc.OpenAsync();
+            await _msc.OpenAsync();
         }
         catch (Exception ex)
         {
-            Console.WriteLine("数据库无法连接");
+            Log.Fatal("DbConnector: Error while opening SQL connection");
 #if DEBUG
-            Console.WriteLine(ex.ToString());
+            Log.Fatal(ex.ToString());
 #endif
             Environment.Exit(-1);
         }
 
+        Log.Information("DbConnector: Initializing SQL connection");
         var sql = @"SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'groupservices';";
-        MySqlCommand cmd = new(sql, msc);
+        MySqlCommand cmd = new(sql, _msc);
         var reader = await cmd.ExecuteReaderAsync();
         _ = reader.Read();
         if (reader[0].ToString() == "0")
         {
-            var createsql =
-                $@"CREATE TABLE `groupservices` ( `Id` BIGINT(20) UNSIGNED ZEROFILL NOT NULL, `Service` TINYTEXT NULL DEFAULT NULL COLLATE '{Collation}', PRIMARY KEY (`Id`) USING BTREE)";
-            MySqlCommand createcmd = new(createsql, msc);
-            _ = await cmd.ExecuteNonQueryAsync();
+            Log.Information("DbConnector: Table 'groupservices' does not exist");
+            var createSql =
+                $@"CREATE TABLE `groupservices` ( `Id` BIGINT(20) UNSIGNED ZEROFILL NOT NULL, `Service` TINYTEXT NULL DEFAULT NULL COLLATE '{_collation}', PRIMARY KEY (`Id`) USING BTREE)";
+            MySqlCommand createCmd = new(createSql, _msc);
+            _ = await createCmd.ExecuteNonQueryAsync();
+            Log.Information("DbConnector: Created table `groupservices`");
         }
 
-        await msc.CloseAsync();
+        await _msc.CloseAsync();
     }
 }

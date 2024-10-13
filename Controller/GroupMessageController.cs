@@ -9,22 +9,21 @@ internal class GroupMessageController
     {
         _groupMessage = groupMessage;
         AddDelegate();
-        if (GMDict.ContainsKey(_groupMessage.Message)) _action = GMDict[_groupMessage.Message];
-
-        var MessageSplit = groupMessage.Message.ToString().Split(" ");
-        if (MessageSplit.Length > 0 && GMCommandDict.ContainsKey(MessageSplit[0]))
-            _commandAction = GMCommandDict[MessageSplit[0]];
+        if (_gmDict.TryGetValue(_groupMessage.Message, out var value)) _action = value;
+        var messageSplit = groupMessage.Message.ToString().Split(" ");
+        if (messageSplit.Length > 0 && _gmCommandDict.ContainsKey(messageSplit[0]))
+            _commandAction = _gmCommandDict[messageSplit[0]];
     }
 
     private void AddDelegate()
     {
-        GMDict.Add("今日运势", Fortune.TodaysFortune);
-        GMDict.Add("东方原曲认知", TouhouService.TouhouOSTRecognise);
-        GMDict.Add("随机东方原曲", TouhouService.RandomTouhouOST);
-        GMCommandDict.Add("/bili", BiliService.BiliQuery);
-        GMCommandDict.Add("/service", ServiceManager.ServiceMgr);
-        GMCommandDict.Add("/gal", GalService.GalServiceInit);
-        GMCommandDict.Add("/th", TouhouService.TouhouServiceInit);
+        _gmDict.Add("今日运势", Fortune.TodaysFortune);
+        _gmDict.Add("东方原曲认知", TouhouService.TouhouOstRecog);
+        _gmDict.Add("随机东方原曲", TouhouService.RandomTouhouOst);
+        _gmCommandDict.Add("/bili", BiliService.BiliQuery);
+        _gmCommandDict.Add("/service", ServiceManager.ServiceMgr);
+        _gmCommandDict.Add("/gal", GalService.GalServiceInit);
+        _gmCommandDict.Add("/th", TouhouService.TouhouServiceInit);
     }
 
     public async Task Exec()
@@ -36,20 +35,20 @@ internal class GroupMessageController
 
     #region General
 
-    public delegate Task GMDelegate(GroupMessageEventArgs groupMessage);
+    private delegate Task GmDelegate(GroupMessageEventArgs groupMessage);
 
     private readonly GroupMessageEventArgs _groupMessage;
-    private readonly GMDelegate? _action;
-    private readonly Dictionary<string, GMDelegate> GMDict = new();
+    private readonly GmDelegate? _action;
+    private readonly Dictionary<string, GmDelegate> _gmDict = new();
 
     #endregion
 
     #region Command
 
-    public delegate Task GMCommandDelegate(GroupMessageEventArgs groupMessage);
+    private delegate Task GmCommandDelegate(GroupMessageEventArgs groupMessage);
 
-    private readonly GMCommandDelegate? _commandAction;
-    private readonly Dictionary<string, GMCommandDelegate> GMCommandDict = new();
+    private readonly GmCommandDelegate? _commandAction;
+    private readonly Dictionary<string, GmCommandDelegate> _gmCommandDict = new();
 
     #endregion
 }

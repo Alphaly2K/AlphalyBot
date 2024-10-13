@@ -4,13 +4,14 @@ using Makabaka.Models.EventArgs;
 using Makabaka.Models.Messages;
 using Newtonsoft.Json;
 using RestSharp;
+using Serilog;
 
 namespace AlphalyBot.Service;
 
 internal class TouhouService
 {
     //来自：https://github.com/XiaoGeNintendo/TouhouSongRecognitiveTest
-    public static List<string> OSTKey = new()
+    private static readonly List<string> OstKey = new()
     {
         "A Sacred Lot!!!东方灵异传",
         "永远之巫女!!!东方灵异传",
@@ -641,22 +642,25 @@ internal class TouhouService
 
     private readonly GroupMessageEventArgs _groupMessage;
 
-    public TouhouService(GroupMessageEventArgs groupMessage)
+    private TouhouService(GroupMessageEventArgs groupMessage)
     {
         _groupMessage = groupMessage;
     }
 
-    public static async Task TouhouOSTRecognise(GroupMessageEventArgs groupMessage)
+    public static async Task TouhouOstRecog(GroupMessageEventArgs groupMessage)
     {
         ServiceManager service = new(groupMessage.GroupId);
         await service.Init();
         var touhou = new TouhouService(groupMessage);
-        if (service.IsServiceEnabled(Services.TouhouOST)) await touhou.TouhouOST();
+        if (service.IsServiceEnabled(Services.TouhouOstRecog)) await touhou.TouhouOstRecog();
     }
 
-    public static async Task RandomTouhouOST(GroupMessageEventArgs groupMessage)
+    public static async Task RandomTouhouOst(GroupMessageEventArgs groupMessage)
     {
-        //todo
+        ServiceManager service = new(groupMessage.GroupId);
+        await service.Init();
+        var touhou = new TouhouService(groupMessage);
+        if (service.IsServiceEnabled(Services.RandomTouhouOst)) await touhou.RandomTouhouOst();
     }
 
     public static async Task TouhouServiceInit(GroupMessageEventArgs groupMessage)
@@ -665,19 +669,35 @@ internal class TouhouService
         await service.Init();
         var touhou = new TouhouService(groupMessage);
         if (groupMessage.Message.ToString().Split(" ")[1].ToLower() == "ostrecognise" &&
-            groupMessage.Message.ToString().Split(" ").Length == 2 && service.IsServiceEnabled(Services.TouhouOST))
+            groupMessage.Message.ToString().Split(" ").Length == 2 && service.IsServiceEnabled(Services.TouhouOstRecog))
         {
-            await touhou.TouhouOST();
+            await touhou.TouhouOstRecog();
         }
         else
         {
             if (groupMessage.Message.ToString().Split(" ")[1].ToLower() == "ostrecognise" &&
                 groupMessage.Message.ToString().Split(" ").Length == 3 &&
-                service.IsServiceEnabled(Services.TouhouOST)) await touhou.TouhouOSTCheck();
+                service.IsServiceEnabled(Services.TouhouOstRecog)) await touhou.TouhouOstRecogCheck();
         }
+
+        if (groupMessage.Message.ToString().Split(" ")[1].ToLower() == "randomost" &&
+            service.IsServiceEnabled(Services.RandomTouhouOst))
+            await touhou.RandomTouhouOst();
     }
 
-    public async Task TouhouOSTCheck()
+    private async Task RandomTouhouOst()
+    {
+        Log.Information("RandomTouhouOst: Command from {0} in {1}", _groupMessage.UserId, _groupMessage.GroupId);
+        var rnd = new Random();
+        var ost = OstKey[rnd.Next(0, OstKey.Count - 1)];
+        var tmp = Environment.CurrentDirectory;
+        var uri = @$"file:///{tmp}\\audio\\{ost}.mp3";
+        await SendAudioFile(_groupMessage.GroupId, uri);
+        Log.Information("RandomTouhouOst: Sent audio file to {0}", _groupMessage.GroupId);
+        await _groupMessage.ReplyAsync(new TextSegment(TextFormat(ost)));
+    }
+
+    private async Task TouhouOstRecogCheck()
     {
         var answer = _groupMessage.Message.ToString().Split(" ")[2];
         int option;
@@ -698,7 +718,7 @@ internal class TouhouService
             default: return;
         }
 
-        if (option == Program.TouhouOST[_groupMessage.Sender.UserId])
+        if (option == Program.TouhouOst[_groupMessage.Sender.UserId])
             await _groupMessage.ReplyAsync(new TextSegment("回答正确"));
         else
             await _groupMessage.ReplyAsync(new TextSegment("回答错误"));
@@ -709,38 +729,51 @@ internal class TouhouService
         return $"{text.Split("!!!")[0]}({text.Split("!!!")[1]})";
     }
 
-    public async Task TouhouOST()
+    private static async Task SendAudioFile(long groupId, string uri)
     {
-        if (Program.TouhouOST.ContainsKey(_groupMessage.Sender.UserId)) return;
-        var rnd = new Random();
-        var options = RandomR.GenerateUniqueRandomNumbers(0, OSTKey.Count - 1, 4);
-        var result = OSTKey[options[0]];
-        var filename = Guid.NewGuid() + ".mp3";
-        await AudioCutter.RandomClipFromAudioAsync(result, filename);
-        var tmp = Environment.CurrentDirectory;
-        var uri = @$"file:///{tmp}\\{filename}";
         var client = new RestClient("http://127.0.0.1:3000/send_group_msg");
         var request = new RestRequest();
         request.AddHeader("Content-Type", "application/json");
         request.Method = Method.Post;
-        var sendreq = new SendMessageModel.Rootobject();
-        sendreq.group_id = _groupMessage.GroupId;
-        sendreq.message = new SendMessageModel.Message();
-        sendreq.message.type = "record";
-        sendreq.message.data = new SendMessageModel.Data();
-        sendreq.message.data.file = uri;
-        request.AddBody(JsonConvert.SerializeObject(sendreq));
+        var sendReq = new SendMessageModel.Rootobject
+        {
+            group_id = groupId,
+            message = new SendMessageModel.Message
+            {
+                type = "record",
+                data = new SendMessageModel.Data
+                {
+                    file = uri
+                }
+            }
+        };
+        request.AddBody(JsonConvert.SerializeObject(sendReq));
         await client.ExecuteAsync(request);
-        var randomoptions = RandomR.GenerateUniqueRandomNumbers(0, 3, 4);
-        var trueselection = 0;
-        while (randomoptions[trueselection] != 0) trueselection++;
+    }
+
+    private async Task TouhouOstRecog()
+    {
+        if (Program.TouhouOst.ContainsKey(_groupMessage.Sender.UserId)) return;
+        Log.Information("TouhouOstRecognise: Command from {0} in {1}", _groupMessage.UserId, _groupMessage.GroupId);
+        var options = RandomR.GenerateUniqueRandomNumbers(0, OstKey.Count - 1, 4);
+        var result = OstKey[options[0]];
+        var filename = Guid.NewGuid() + ".mp3";
+        await AudioCutter.RandomClipFromAudioAsync(result, filename);
+        Log.Information("TouhouOstRecognise: Clipped audio {0}", filename);
+        var tmp = Environment.CurrentDirectory;
+        var uri = @$"file:///{tmp}\\{filename}";
+        await SendAudioFile(_groupMessage.GroupId, uri);
+        Log.Information("TouhouOstRecognise: Sent audio file to {0}", _groupMessage.GroupId);
+        var randomOptions = RandomR.GenerateUniqueRandomNumbers(0, 3, 4);
+        var trueSelection = 0;
+        while (randomOptions[trueSelection] != 0) trueSelection++;
         await _groupMessage.ReplyAsync(new TextSegment(
-            $"搶曽原曲认知\n包含正作、官方出版物以及西方和连缘的OST\n使用/th ostrecognise <answer>回复答案\nA.{TextFormat(OSTKey[options[randomoptions[0]]])}\nB.{TextFormat(OSTKey[options[randomoptions[1]]])}\nC.{TextFormat(OSTKey[options[randomoptions[2]]])}\nD.{TextFormat(OSTKey[options[randomoptions[3]]])}\n"));
-        Program.TouhouOST.Add(_groupMessage.Sender.UserId, (short)trueselection);
+            $"搶曽原曲认知\n包含正作、官方出版物以及西方和连缘的OST\n使用/th ostrecognise <answer>回复答案\nA.{TextFormat(OstKey[options[randomOptions[0]]])}\nB.{TextFormat(OstKey[options[randomOptions[1]]])}\nC.{TextFormat(OstKey[options[randomOptions[2]]])}\nD.{TextFormat(OstKey[options[randomOptions[3]]])}\n"));
+        Program.TouhouOst.Add(_groupMessage.Sender.UserId, (short)trueSelection);
         await Task.Run(async () =>
         {
-            await Task.Delay(35000);
-            Program.TouhouOST.Remove(_groupMessage.Sender.UserId);
+            await Task.Delay(45000);
+            Program.TouhouOst.Remove(_groupMessage.Sender.UserId);
         });
         File.Delete(filename);
     }
