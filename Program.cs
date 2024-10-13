@@ -53,14 +53,11 @@ internal static class Program
         }
 
         if (File.Exists(FortuneConfigPath))
-        {
-            FortuneConfig = JsonConvert.DeserializeObject<FortuneServiceConfig>(await File.ReadAllTextAsync(FortuneConfigPath));
-        }
+            FortuneConfig =
+                JsonConvert.DeserializeObject<FortuneServiceConfig>(await File.ReadAllTextAsync(FortuneConfigPath));
         else
-        {
             Log.Warning("Fortune: Today's fortune config file could not be found. Creating a new one.");
-        }
-        
+
         config ??= new ForwardWebSocketServiceConfig();
         FortuneConfig ??= new FortuneServiceConfig();
         await File.WriteAllTextAsync(ConfigPath, JsonConvert.SerializeObject(config, Formatting.Indented));

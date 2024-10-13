@@ -17,7 +17,7 @@ public class Fortune
         ds = ds.Remove(ds.Length - 6);
         var seed = (userId + ds).GetHashCode();
         Gaussian random = new(seed);
-        int[] fortune = new int[3];
+        var fortune = new int[3];
         for (var i = 0; i < 3; i++)
         {
             Debug.Assert(Program.FortuneConfig != null, "Program.FortuneConfig != null");
@@ -36,8 +36,9 @@ public class Fortune
 
     private static string FortuneRemark(int totalFortune)
     {
-        return (totalFortune < 20*3 ) ? "差的离谱" :((totalFortune<50*3)?"不好":((totalFortune<=75*3)?"还行":"很好"));
+        return totalFortune < 20 * 3 ? "差的离谱" : totalFortune < 50 * 3 ? "不好" : totalFortune <= 75 * 3 ? "还行" : "很好";
     }
+
     public static async Task TodaysFortune(GroupMessageEventArgs groupMessage)
     {
         ServiceManager service = new(groupMessage.GroupId);
