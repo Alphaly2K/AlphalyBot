@@ -27,6 +27,7 @@ internal class BiliService
         return video;
     }
 
+    [Service(Services.BiliVideoQuery)]
     public static async Task BiliQuery(GroupMessageEventArgs groupMessage)
     {
         ServiceManager service = new(groupMessage.GroupId);

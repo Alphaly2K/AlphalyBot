@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using AlphalyBot.Model;
 using AlphalyBot.Tool;
 using Makabaka.Models.EventArgs;
 using Makabaka.Models.Messages;
@@ -39,15 +40,11 @@ public class Fortune
         return totalFortune < 20 * 3 ? "差的离谱" : totalFortune < 50 * 3 ? "不好" : totalFortune <= 75 * 3 ? "还行" : "很好";
     }
 
+    [Service(Services.TodaysFortune)]
     public static async Task TodaysFortune(GroupMessageEventArgs groupMessage)
     {
-        ServiceManager service = new(groupMessage.GroupId);
-        await service.Init();
-        if (service.IsServiceEnabled(Services.TodaysFortune))
-        {
-            Log.Information("Fortune: Command from {0} in {1}", groupMessage.UserId, groupMessage.GroupId);
-            Fortune fortune = new(groupMessage.Sender.UserId);
-            _ = await groupMessage.ReplyAsync(new TextSegment(fortune._message));
-        }
+        Log.Information("Fortune: Command from {0} in {1}", groupMessage.UserId, groupMessage.GroupId);
+        Fortune fortune = new(groupMessage.Sender.UserId);
+        _ = await groupMessage.ReplyAsync(new TextSegment(fortune._message));
     }
 }

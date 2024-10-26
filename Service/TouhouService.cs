@@ -647,20 +647,18 @@ internal class TouhouService
         _groupMessage = groupMessage;
     }
 
+    [Service(Services.TouhouOstRecog)]
     public static async Task TouhouOstRecog(GroupMessageEventArgs groupMessage)
     {
-        ServiceManager service = new(groupMessage.GroupId);
-        await service.Init();
         var touhou = new TouhouService(groupMessage);
-        if (service.IsServiceEnabled(Services.TouhouOstRecog)) await touhou.TouhouOstRecog();
+        await touhou.TouhouOstRecog();
     }
 
+    [Service(Services.RandomTouhouOst)]
     public static async Task RandomTouhouOst(GroupMessageEventArgs groupMessage)
     {
-        ServiceManager service = new(groupMessage.GroupId);
-        await service.Init();
         var touhou = new TouhouService(groupMessage);
-        if (service.IsServiceEnabled(Services.RandomTouhouOst)) await touhou.RandomTouhouOst();
+        await touhou.RandomTouhouOst();
     }
 
     public static async Task TouhouServiceInit(GroupMessageEventArgs groupMessage)

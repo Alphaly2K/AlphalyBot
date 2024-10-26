@@ -1,4 +1,5 @@
-﻿using AlphalyBot.Tool;
+﻿using AlphalyBot.Model;
+using AlphalyBot.Tool;
 using Makabaka.Models.EventArgs;
 using Serilog;
 
@@ -6,6 +7,7 @@ namespace AlphalyBot.Service;
 
 public enum Services
 {
+    ServiceManager = -1,
     TodaysFortune = 0,
     BiliVideoQuery = 1,
     MonthlyGal = 2,
@@ -25,6 +27,7 @@ internal class ServiceManager
         _groupId = groupId;
     }
 
+    [Service(Services.ServiceManager, true)]
     public static async Task ServiceMgr(GroupMessageEventArgs groupMessage)
     {
         var message = groupMessage.Message.ToString().Split(" ");
@@ -85,6 +88,8 @@ internal class ServiceManager
 
     public bool IsServiceEnabled(Services service)
     {
-        return _services[(int)service] == '1';
+        if(service != Services.ServiceManager)
+            return _services[(int)service] == '1';
+        return true;
     }
 }

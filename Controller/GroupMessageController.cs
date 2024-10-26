@@ -1,4 +1,7 @@
-﻿using AlphalyBot.Service;
+﻿using System.Diagnostics;
+using System.Reflection;
+using AlphalyBot.Model;
+using AlphalyBot.Service;
 using Makabaka.Models.EventArgs;
 
 namespace AlphalyBot.Controller;
@@ -28,9 +31,42 @@ internal class GroupMessageController
 
     public async Task Exec()
     {
-        if (_action != null) await _action.Invoke(_groupMessage);
+        if (_action != null)
+        {
+            var serviceAttribute = _action.GetMethodInfo().GetCustomAttributes(false).OfType<ServiceAttribute>()
+                .FirstOrDefault();
+            if (serviceAttribute == null)
+            {
+                await _action.Invoke(_groupMessage);
+                return;
+            }
 
-        if (_commandAction != null) await _commandAction.Invoke(_groupMessage);
+            if (serviceAttribute.Auth && !Program.Admins.Contains(_groupMessage.Sender.UserId))
+                return;
+            ServiceManager service = new(_groupMessage.GroupId);
+            await service.Init();
+            Debug.Assert(serviceAttribute != null, nameof(serviceAttribute) + " != null");
+            if (service.IsServiceEnabled(serviceAttribute.Service))
+                await _action.Invoke(_groupMessage);
+        }
+
+        if (_commandAction != null)
+        {
+            var serviceAttribute = _commandAction.GetMethodInfo().GetCustomAttributes(false).OfType<ServiceAttribute>()
+                .FirstOrDefault();
+            if (serviceAttribute == null)
+            {
+                await _commandAction.Invoke(_groupMessage);
+                return;
+            }
+
+            if (serviceAttribute.Auth && !Program.Admins.Contains(_groupMessage.Sender.UserId))
+                return;
+            ServiceManager service = new(_groupMessage.GroupId);
+            await service.Init();
+            if (service.IsServiceEnabled(serviceAttribute.Service))
+                await _commandAction.Invoke(_groupMessage);
+        }
     }
 
     #region General

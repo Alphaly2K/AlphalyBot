@@ -26,11 +26,14 @@ internal static class Program
 
     private static async Task Main(string[] args)
     {
+        Console.Clear();
         var beforeDt = DateTime.Now;
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
             .Enrich.FromLogContext()
-            .WriteTo.Console().CreateLogger();
+            .WriteTo.File("log.txt")
+            .WriteTo.Console().CreateLogger()
+            ;
         // 加载配置
         ForwardWebSocketServiceConfig? config = null;
         ProgramConfigModel? programConfig = null;
@@ -83,6 +86,20 @@ internal static class Program
         await service.StartAsync();
         var afterDt = DateTime.Now;
         Log.Information("Main: Done ({0}ms)!", afterDt.Subtract(beforeDt).TotalMilliseconds);
+        await Task.Run(async () =>
+        {
+            while (true)
+            {
+                var command = Console.ReadLine();
+                if (command == "exit")
+                {
+                    Log.Information("Main: Task ended");
+                    await service.StopAsync();
+                    Environment.Exit(0);
+                }
+            }
+        });
+
         // 等待取消信号
         try
         {
@@ -93,7 +110,7 @@ internal static class Program
             // 服务停止
         }
 
-        Log.Information("Main: Task cancelled");
+        Log.Information("Main: Task ended");
         await service.StopAsync();
     }
 
