@@ -20,6 +20,7 @@ public class Gaussian
 
             s = u * u + v * v;
         }
+
         var z = Math.Sqrt(-2 * Math.Log(s) / s) * u;
         return z;
     }

@@ -651,7 +651,7 @@ internal class TouhouService
     public static async Task TouhouOstRecog(GroupMessageEventArgs groupMessage)
     {
         var touhou = new TouhouService(groupMessage);
-        await touhou.TouhouOstRecog();
+        await touhou.TouhouOstRecog(string.Empty);
     }
 
     [Service(Services.RandomTouhouOst)]
@@ -663,26 +663,11 @@ internal class TouhouService
 
     public static async Task TouhouServiceInit(GroupMessageEventArgs groupMessage)
     {
-        ServiceManager service = new(groupMessage.GroupId);
-        await service.Init();
-        var touhou = new TouhouService(groupMessage);
-        if (groupMessage.Message.ToString().Split(" ")[1].ToLower() == "ostrecognise" &&
-            groupMessage.Message.ToString().Split(" ").Length == 2 && service.IsServiceEnabled(Services.TouhouOstRecog))
-        {
-            await touhou.TouhouOstRecog();
-        }
-        else
-        {
-            if (groupMessage.Message.ToString().Split(" ")[1].ToLower() == "ostrecognise" &&
-                groupMessage.Message.ToString().Split(" ").Length == 3 &&
-                service.IsServiceEnabled(Services.TouhouOstRecog)) await touhou.TouhouOstRecogCheck();
-        }
-
-        if (groupMessage.Message.ToString().Split(" ")[1].ToLower() == "randomost" &&
-            service.IsServiceEnabled(Services.RandomTouhouOst))
-            await touhou.RandomTouhouOst();
+        var handler = new CommandHandler(groupMessage, typeof(TouhouService));
+        await handler.ExecAsync();
     }
 
+    [Service(Services.RandomTouhouOst, prompt: "randomost")]
     private async Task RandomTouhouOst()
     {
         Log.Information("RandomTouhouOst: Command from {0} in {1}", _groupMessage.UserId, _groupMessage.GroupId);
@@ -695,9 +680,8 @@ internal class TouhouService
         await _groupMessage.ReplyAsync(new TextSegment(TextFormat(ost)));
     }
 
-    private async Task TouhouOstRecogCheck()
+    private async Task TouhouOstRecogCheck(string answer)
     {
-        var answer = _groupMessage.Message.ToString().Split(" ")[2];
         int option;
         switch (answer)
         {
@@ -749,8 +733,15 @@ internal class TouhouService
         await client.ExecuteAsync(request);
     }
 
-    private async Task TouhouOstRecog()
+    [Service(Services.TouhouOstRecog, prompt: "ostrecognise")]
+    private async Task TouhouOstRecog(string arg)
     {
+        if (arg != string.Empty)
+        {
+            await TouhouOstRecogCheck(arg);
+            return;
+        }
+
         if (Program.TouhouOst.ContainsKey(_groupMessage.Sender.UserId)) return;
         Log.Information("TouhouOstRecognise: Command from {0} in {1}", _groupMessage.UserId, _groupMessage.GroupId);
         var options = RandomR.GenerateUniqueRandomNumbers(0, OstKey.Count - 1, 4);

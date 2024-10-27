@@ -29,10 +29,10 @@ internal static class Program
         Console.Clear();
         var beforeDt = DateTime.Now;
         Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
-            .Enrich.FromLogContext()
-            .WriteTo.File("log.txt")
-            .WriteTo.Console().CreateLogger()
+                .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+                .Enrich.FromLogContext()
+                .WriteTo.File("log.txt")
+                .WriteTo.Console().CreateLogger()
             ;
         // 加载配置
         ForwardWebSocketServiceConfig? config = null;

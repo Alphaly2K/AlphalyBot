@@ -1,4 +1,6 @@
-﻿using CodeHollow.FeedReader;
+﻿using AlphalyBot.Model;
+using AlphalyBot.Tool;
+using CodeHollow.FeedReader;
 using HtmlAgilityPack;
 using Makabaka.Models.EventArgs;
 using Makabaka.Models.Messages;
@@ -17,23 +19,14 @@ internal class GalService
 
     public static async Task GalServiceInit(GroupMessageEventArgs groupMessage)
     {
-        ServiceManager service = new(groupMessage.GroupId);
-        await service.Init();
-        GalService galService = new(groupMessage);
-        if (groupMessage.Message.ToString().Split(" ")[1].ToLower() == "monthlynew" &&
-            service.IsServiceEnabled(Services.MonthlyGal))
-        {
-            var argument = groupMessage.Message.ToString().Split(" ").Length == 3
-                ? groupMessage.Message.ToString().Split(" ")[2]
-                : null;
-            if (argument == "true") await galService.MonthlyNew(true);
-
-            if (argument is "false" or null) await galService.MonthlyNew();
-        }
+        var handler = new CommandHandler(groupMessage, typeof(GalService));
+        await handler.ExecAsync();
     }
 
-    private async Task MonthlyNew(bool pictureVisibility = false)
+    [Service(Services.MonthlyGal, prompt: "monthlynew")]
+    private async Task MonthlyNew(string prompt)
     {
+        var pictureVisibility = prompt == "true";
         Log.Information("GalgameMonthlyNew: Command from {0} in {1}, picture visibility = {2}", _groupMessage.UserId,
             _groupMessage.GroupId, pictureVisibility);
         var feed = await FeedReader.ReadAsync("https://rsshub.ktachibana.party/ymgal/game/release");
