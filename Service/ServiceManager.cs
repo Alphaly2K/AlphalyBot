@@ -88,7 +88,7 @@ internal class ServiceManager
 
     public bool IsServiceEnabled(Services service)
     {
-        if(service != Services.ServiceManager)
+        if (service != Services.ServiceManager)
             return _services[(int)service] == '1';
         return true;
     }
