@@ -41,7 +41,7 @@ public class CommandHandler
             try
             {
                 var arg = command.Length == 3 ? command[2].ToLower() : string.Empty;
-                method.Invoke(instance, new object[] { arg });
+                await Task.Run(() => method.Invoke(instance, new object[] { arg }));
             }
             catch (Exception e)
             {

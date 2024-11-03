@@ -8,8 +8,14 @@ using Serilog;
 
 namespace AlphalyBot.Service;
 
-internal class TouhouService
+internal class TouhouService: IPlugin
 {
+    public string Name => "Touhou";
+    public string Description => "Touhou";
+    public string Author => "Alphaly";
+    public string Version => "1.0";
+
+    public HashSet<string> ServiceList => new List<string>();
     //来自：https://github.com/XiaoGeNintendo/TouhouSongRecognitiveTest
     private static readonly List<string> OstKey = new()
     {
@@ -647,14 +653,14 @@ internal class TouhouService
         _groupMessage = groupMessage;
     }
 
-    [Service(Services.TouhouOstRecog)]
+    [Shortcut("Touhou OST Recognise", "东方原曲认知")]
     public static async Task TouhouOstRecog(GroupMessageEventArgs groupMessage)
     {
         var touhou = new TouhouService(groupMessage);
         await touhou.TouhouOstRecog(string.Empty);
     }
 
-    [Service(Services.RandomTouhouOst)]
+    [Shortcut("Random Touhou OST", "随机东方原曲")]
     public static async Task RandomTouhouOst(GroupMessageEventArgs groupMessage)
     {
         var touhou = new TouhouService(groupMessage);
@@ -667,7 +673,13 @@ internal class TouhouService
         await handler.ExecAsync();
     }
 
-    [Service(Services.RandomTouhouOst, prompt: "randomost")]
+    public async Task Execute(GroupMessageEventArgs groupMessage)
+    {
+        var handler = new CommandHandler(groupMessage, typeof(TouhouService));
+        await handler.ExecAsync();
+    }
+    
+    [Service("Random Touhou OST", prompt: "randomost")]
     private async Task RandomTouhouOst()
     {
         Log.Information("RandomTouhouOst: Command from {0} in {1}", _groupMessage.UserId, _groupMessage.GroupId);
@@ -683,7 +695,7 @@ internal class TouhouService
     private async Task TouhouOstRecogCheck(string answer)
     {
         int option;
-        switch (answer)
+        switch (answer.ToUpper())
         {
             case "A":
                 option = 0;
@@ -733,7 +745,7 @@ internal class TouhouService
         await client.ExecuteAsync(request);
     }
 
-    [Service(Services.TouhouOstRecog, prompt: "ostrecognise")]
+    [Service("Touhou OST Recognise", prompt: "ostrecognise")]
     private async Task TouhouOstRecog(string arg)
     {
         if (arg != string.Empty)

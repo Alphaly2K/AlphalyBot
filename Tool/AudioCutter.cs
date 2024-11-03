@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using Serilog;
 
 namespace AlphalyBot.Tool;
 
@@ -35,6 +36,7 @@ internal static class AudioCutter
         if (double.TryParse(output, out var durationInSeconds))
             return TimeSpan.FromSeconds(durationInSeconds);
         throw new Exception("无法获取音频时长。");
+        
     }
 
     private static async Task RunFFmpegAsync(string inputFile, string outputFile, int startTime, int duration)

@@ -11,22 +11,20 @@ internal class GroupMessageController
     public GroupMessageController(GroupMessageEventArgs groupMessage)
     {
         _groupMessage = groupMessage;
-        AddDelegate();
         if (_gmDict.TryGetValue(_groupMessage.Message, out var value)) _action = value;
         var messageSplit = groupMessage.Message.ToString().Split(" ");
         if (messageSplit.Length > 0 && _gmCommandDict.ContainsKey(messageSplit[0]))
             _commandAction = _gmCommandDict[messageSplit[0]];
     }
 
-    private void AddDelegate()
+    public static void AddShortcutDelegate(string shortcut, GmShortcutDelegate action)
     {
-        _gmDict.Add("今日运势", Fortune.TodaysFortune);
-        _gmDict.Add("东方原曲认知", TouhouService.TouhouOstRecog);
-        _gmDict.Add("随机东方原曲", TouhouService.RandomTouhouOst);
-        _gmCommandDict.Add("/bili", BiliService.BiliQuery);
-        _gmCommandDict.Add("/service", ServiceManager.ServiceMgr);
-        _gmCommandDict.Add("/gal", GalService.GalServiceInit);
-        _gmCommandDict.Add("/th", TouhouService.TouhouServiceInit);
+        GmShortcutsDict.Add(shortcut, action);
+    }
+    
+    public static void AddCommandDelegate(string commandNamespace, GmCommandDelegate action)
+    {
+        GmCommandsDict.Add(commandNamespace, action);
     }
 
     public async Task Exec()
@@ -71,20 +69,20 @@ internal class GroupMessageController
 
     #region General
 
-    private delegate Task GmDelegate(GroupMessageEventArgs groupMessage);
+    public delegate Task GmShortcutDelegate(GroupMessageEventArgs groupMessage);
 
     private readonly GroupMessageEventArgs _groupMessage;
-    private readonly GmDelegate? _action;
-    private readonly Dictionary<string, GmDelegate> _gmDict = new();
+    private readonly GmShortcutDelegate? _action;
+    private static readonly Dictionary<string, GmShortcutDelegate> GmShortcutsDict = new();
 
     #endregion
 
     #region Command
 
-    private delegate Task GmCommandDelegate(GroupMessageEventArgs groupMessage);
+    public delegate Task GmCommandDelegate(GroupMessageEventArgs groupMessage);
 
     private readonly GmCommandDelegate? _commandAction;
-    private readonly Dictionary<string, GmCommandDelegate> _gmCommandDict = new();
+    private static readonly Dictionary<string, GmCommandDelegate> GmCommandsDict = new();
 
     #endregion
 }

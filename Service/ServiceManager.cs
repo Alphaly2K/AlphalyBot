@@ -15,7 +15,7 @@ public enum Services
     RandomTouhouOst = 4
 }
 
-internal class ServiceManager
+internal class ServiceManager: IPlugin
 {
     private const int ServiceAmount = 5;
     private const string DefaultSettings = "11111";

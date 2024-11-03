@@ -77,7 +77,8 @@ internal static class Program
         service.OnPrivateMessage += OnPrivateMessage;
         service.OnGroupRequest += OnGroupRequest;
         SqlConnector connector = new(programConfig.SqlConnectionString, "utf8mb4_general_ci");
-        await connector.Init();
+        //todo
+        await connector.Initialize();
         Log.Information("Main: Database connection created");
         // 启动服务
         CancellationTokenSource cts = new();
